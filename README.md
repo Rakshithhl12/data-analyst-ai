@@ -1,6 +1,6 @@
-﻿---
+---
 title: Autonomous Data Analyst
-emoji: 📊
+emoji: ??
 colorFrom: blue
 colorTo: purple
 sdk: docker
