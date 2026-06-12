@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.env
+venv/
+.venv/
+uploads/
+reports/
+charts/
+vector_store/
+instance/users.json
+app.log
+*.log
+.vercel/
+.DS_Store
+
+.vercel
+.env*

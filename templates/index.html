@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Autonomous Data Analyst — AI-Powered Insights</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<style>
+:root{--p:#4f46e5;--s:#7c3aed;--a:#06b6d4;--ok:#22c55e;--bg:#0f0f23;--card:#1a1a2e;
+  --bdr:rgba(255,255,255,.08);--txt:#e2e8f0;--dim:#64748b;--sub:#94a3b8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+nav{background:rgba(15,15,35,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);
+  padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.brand{font-weight:800;font-size:1.2rem;color:#fff;display:flex;align-items:center;gap:.5rem}
+.brand span{color:var(--a)}
+.nav-right{display:flex;align-items:center;gap:.5rem}
+.nav-right a{color:var(--sub);margin-left:.8rem;font-size:.875rem;transition:color .2s}
+.nav-right a:hover{color:#fff}
+.nav-user{display:flex;align-items:center;gap:.6rem;background:rgba(79,70,229,.12);
+  border:1px solid rgba(79,70,229,.25);border-radius:99px;padding:.35rem .9rem;font-size:.82rem;color:#a5b4fc}
+.nav-user i{font-size:.8rem}
+.btn-logout{background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;
+  padding:.3rem .8rem;border-radius:6px;font-size:.78rem;cursor:pointer;transition:all .2s}
+.btn-logout:hover{background:rgba(239,68,68,.1)}
+
+.hero{position:relative;padding:5.5rem 1rem 4rem;text-align:center;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(79,70,229,.28),transparent),
+             radial-gradient(ellipse 50% 40% at 80% 80%,rgba(6,182,212,.12),transparent)}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.5rem;position:relative;
+  background:rgba(79,70,229,.15);border:1px solid rgba(79,70,229,.3);
+  border-radius:99px;padding:.35rem 1rem;font-size:.8rem;color:#a5b4fc;font-weight:600;margin-bottom:1.4rem}
+.dot{width:6px;height:6px;background:var(--a);border-radius:50%;animation:pulse 2s infinite;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-size:clamp(2rem,6vw,3.8rem);font-weight:900;line-height:1.12;margin-bottom:1.1rem;position:relative;
+  background:linear-gradient(135deg,#fff 30%,var(--a));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1.05rem;color:var(--sub);max-width:560px;margin:0 auto 2.5rem;line-height:1.75;position:relative}
+.hero-btns{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.5rem;position:relative}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--s));border:none;color:#fff;
+  padding:.75rem 1.8rem;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;
+  transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}
+.btn-primary:hover{opacity:.9;transform:translateY(-2px);color:#fff}
+.btn-secondary{background:rgba(255,255,255,.06);border:1px solid var(--bdr);color:var(--sub);
+  padding:.75rem 1.8rem;border-radius:10px;font-size:.95rem;cursor:pointer;
+  transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}
+.btn-secondary:hover{border-color:var(--a);color:var(--a)}
+
+/* Pipeline */
+.pipeline{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;
+  overflow-x:auto;padding:.5rem 1rem;margin-bottom:3rem;scrollbar-width:none;position:relative}
+.pipeline::-webkit-scrollbar{display:none}
+.pipe-step{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.pipe-bubble{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;border:2px solid var(--bdr);background:var(--card);transition:all .4s}
+.pipe-bubble.lit{border-color:var(--a);background:rgba(6,182,212,.12);box-shadow:0 0 18px rgba(6,182,212,.3)}
+.pipe-label{font-size:.63rem;color:var(--dim);margin-top:.35rem;text-align:center;white-space:nowrap}
+.pipe-arrow{width:28px;height:2px;background:var(--bdr);flex-shrink:0;margin-top:-13px;transition:background .4s}
+.pipe-arrow.lit{background:linear-gradient(90deg,var(--a),var(--p))}
+
+/* Upload zone */
+.upload-wrap{max-width:620px;margin:0 auto;position:relative}
+.drop-label{display:block;border:2px dashed rgba(79,70,229,.4);border-radius:16px;padding:3rem 2rem;
+  text-align:center;cursor:pointer;transition:all .3s;
+  background:linear-gradient(135deg,rgba(79,70,229,.05),rgba(6,182,212,.02));user-select:none}
+.drop-label:hover,.drop-label.over{border-color:var(--a);background:rgba(6,182,212,.07);
+  box-shadow:0 0 0 4px rgba(6,182,212,.12)}
+.drop-label *{pointer-events:none}
+.dz-icon{font-size:3rem;color:var(--p);margin-bottom:.7rem;display:block;transition:color .3s}
+.drop-label.over .dz-icon{color:var(--a)}
+.drop-label h3{font-size:1.1rem;margin-bottom:.35rem;color:var(--txt)}
+.drop-label p{color:var(--dim);font-size:.875rem}
+.browse-hint{display:inline-flex;align-items:center;gap:.4rem;margin-top:.9rem;
+  background:rgba(79,70,229,.18);border:1px solid rgba(79,70,229,.35);
+  color:#a5b4fc;padding:.38rem 1rem;border-radius:8px;font-size:.83rem;font-weight:600}
+#file-inp{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.prog-wrap{height:4px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;margin-top:1.1rem;display:none}
+.prog-bar{height:100%;width:0;background:linear-gradient(90deg,var(--p),var(--a));border-radius:99px;transition:width .3s ease}
+.file-info{margin-top:.7rem;font-size:.85rem;color:var(--a);min-height:1.2rem;text-align:center}
+
+.analyse-section{margin-top:1.4rem;text-align:center;display:none}
+.btn-analyse{background:linear-gradient(135deg,var(--p),var(--s));border:none;color:#fff;
+  padding:.8rem 2.4rem;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;
+  transition:all .2s;display:inline-flex;align-items:center;gap:.6rem}
+.btn-analyse:hover{opacity:.9;transform:translateY(-2px)}
+.btn-analyse:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.status-card{max-width:620px;margin:1.4rem auto 0;background:var(--card);
+  border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;display:none}
+.status-card h5{font-weight:700;margin-bottom:.9rem;font-size:.93rem}
+.step-item{display:flex;align-items:center;gap:.75rem;padding:.48rem 0;
+  border-bottom:1px solid rgba(255,255,255,.04);font-size:.865rem;color:var(--sub)}
+.step-item:last-child{border:none}
+.step-ico{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;flex-shrink:0;border:1px solid var(--bdr)}
+.step-item.done .step-ico{background:rgba(34,197,94,.15);border-color:var(--ok);color:var(--ok)}
+.step-item.running .step-ico{background:rgba(6,182,212,.15);border-color:var(--a);color:var(--a);animation:spin .8s linear infinite}
+.step-item.done{color:var(--txt)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Features */
+.features{padding:5rem 1.5rem;max-width:1140px;margin:0 auto}
+.features h2{font-size:1.85rem;font-weight:800;text-align:center;margin-bottom:.4rem}
+.features .sub{text-align:center;color:var(--dim);margin-bottom:2.8rem}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.1rem}
+.feat-card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;
+  transition:all .25s;position:relative;overflow:hidden}
+.feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--p),var(--a));opacity:0;transition:opacity .2s}
+.feat-card:hover{transform:translateY(-4px);border-color:rgba(79,70,229,.35)}
+.feat-card:hover::before{opacity:1}
+.feat-icon{font-size:1.9rem;margin-bottom:.75rem}
+.feat-card h4{font-size:.95rem;font-weight:700;margin-bottom:.35rem}
+.feat-card p{font-size:.845rem;color:var(--sub);line-height:1.65}
+
+/* Tech */
+.tech-section{background:var(--card);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);
+  padding:2.2rem 1.5rem;text-align:center}
+.tech-section p{color:var(--dim);font-size:.83rem;margin-bottom:.9rem}
+.tech-badges{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:center}
+.tech-badge{background:#0f172a;border:1px solid var(--bdr);border-radius:8px;
+  padding:.3rem .85rem;font-size:.78rem;color:var(--sub);font-weight:500}
+
+/* Toast */
+#toast-wrap{position:fixed;top:1.2rem;right:1.2rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
+.toast-msg{background:#1e293b;border:1px solid var(--bdr);border-radius:8px;padding:.65rem 1rem;
+  font-size:.84rem;color:var(--txt);max-width:300px;display:flex;align-items:center;gap:.5rem;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);animation:tIn .25s ease}
+@keyframes tIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand"><span>⚡</span>Data<span>Analyst</span> AI</div>
+  <div class="nav-right">
+    <a href="/dashboard"><i class="fas fa-chart-pie me-1"></i>Dashboard</a>
+    <a href="/history"><i class="fas fa-history me-1"></i>History</a>
+    <a href="/report-page"><i class="fas fa-file-alt me-1"></i>Reports</a>
+    <div class="nav-user" id="nav-user"><i class="fas fa-user-circle"></i><span id="nav-name">User</span></div>
+    <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>Logout</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow"><span class="dot"></span>LangGraph + Gemini + FAISS</div>
+  <h1>Autonomous Data<br/>Analyst Agent</h1>
+  <p class="hero-sub">Upload any CSV or Excel file. Eight AI agents automatically clean, analyse, visualise, and generate boardroom-ready insights.</p>
+  <div class="hero-btns">
+    <a href="#upload" class="btn-primary"><i class="fas fa-rocket"></i>Analyse My Data</a>
+    <a href="/dashboard" class="btn-secondary"><i class="fas fa-chart-pie"></i>View Dashboard</a>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="pipeline">
+    <div class="pipe-step"><div class="pipe-bubble" id="pb-0">📂</div><div class="pipe-label">Upload</div></div>
+    <div class="pipe-arrow" id="pa-0"></div>
+    <div class="pipe-step"><div class="pipe-bubble" id="pb-1">🔍</div><div class="pipe-label">Understand</div></div>
+    <div class="pipe-arrow" id="pa-1"></div>
+    <div class="pipe-step"><div class="pipe-bubble" id="pb-2">🧹</div><div class="pipe-label">Clean</div></div>
+    <div class="pipe-arrow" id="pa-2"></div>
+    <div class="pipe-step"><div class="pipe-bubble" id="pb-3">📈</div><div class="pipe-label">EDA</div></div>
+    <div class="pipe-arrow" id="pa-3"></div>
+    <div class="pipe-step"><div class="pipe-bubble" id="pb-4">📊</div><div class="pipe-label">Charts</div></div>
+    <div class="pipe-arrow" id="pa-4"></div>
+    <div class="pipe-step"><div class="pipe-bubble" id="pb-5">🤖</div><div class="pipe-label">Insights</div></div>
+    <div class="pipe-arrow" id="pa-5"></div>
+    <div class="pipe-step"><div class="pipe-bubble" id="pb-6">📑</div><div class="pipe-label">Report</div></div>
+    <div class="pipe-arrow" id="pa-6"></div>
+    <div class="pipe-step"><div class="pipe-bubble" id="pb-7">💬</div><div class="pipe-label">Chat</div></div>
+  </div>
+
+  <!-- Upload zone -->
+  <div class="upload-wrap" id="upload">
+    <label class="drop-label" id="drop-label" for="file-inp">
+      <span class="dz-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+      <h3>Drop your file here</h3>
+      <p>CSV or Excel (.xlsx / .xls) — max 50 MB</p>
+      <span class="browse-hint"><i class="fas fa-folder-open"></i>Browse files</span>
+    </label>
+    <input type="file" id="file-inp" accept=".csv,.xlsx,.xls" style="display:none"/>
+    <div class="prog-wrap" id="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+    <p class="file-info" id="file-info"></p>
+
+    <div class="analyse-section" id="analyse-section">
+      <button class="btn-analyse" id="btn-analyse" onclick="startAnalysis()">
+        <i class="fas fa-brain"></i>Run Full Analysis
+      </button>
+      <p style="margin-top:.6rem;font-size:.79rem;color:var(--dim)">Runs the complete 7-step LangGraph pipeline</p>
+    </div>
+
+    <div class="status-card" id="status-card">
+      <h5>🔄 Running Analysis Pipeline…</h5>
+      <div class="step-item" id="step-0"><div class="step-ico"><i class="fas fa-circle"></i></div>Load &amp; Understand Dataset</div>
+      <div class="step-item" id="step-1"><div class="step-ico"><i class="fas fa-circle"></i></div>Clean &amp; Validate Data</div>
+      <div class="step-item" id="step-2"><div class="step-ico"><i class="fas fa-circle"></i></div>Exploratory Data Analysis</div>
+      <div class="step-item" id="step-3"><div class="step-ico"><i class="fas fa-circle"></i></div>Generate Visualisations</div>
+      <div class="step-item" id="step-4"><div class="step-ico"><i class="fas fa-circle"></i></div>AI Insight Generation (Gemini)</div>
+      <div class="step-item" id="step-5"><div class="step-ico"><i class="fas fa-circle"></i></div>Build Report &amp; RAG Index</div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-section">
+  <p>Built with</p>
+  <div class="tech-badges">
+    <span class="tech-badge">🐍 Python</span><span class="tech-badge">⚗️ Flask</span>
+    <span class="tech-badge">🕸 LangGraph</span><span class="tech-badge">🔗 LangChain</span>
+    <span class="tech-badge">✨ Gemini 1.5 Flash</span><span class="tech-badge">🐼 Pandas</span>
+    <span class="tech-badge">📊 Plotly</span><span class="tech-badge">🎨 Seaborn</span>
+    <span class="tech-badge">🔍 FAISS</span><span class="tech-badge">📄 ReportLab PDF</span>
+  </div>
+</div>
+
+<section class="features">
+  <h2>Everything Automated</h2>
+  <p class="sub">One file upload. Eight intelligent agents. Zero manual analysis.</p>
+  <div class="feat-grid">
+    <div class="feat-card"><div class="feat-icon">🔐</div><h4>Authentication System</h4><p>Secure login and registration with hashed passwords. Full session history per user.</p></div>
+    <div class="feat-card"><div class="feat-icon">📂</div><h4>Smart Data Loading</h4><p>Auto-detects schema, dtypes, missing values and memory footprint for CSV and Excel.</p></div>
+    <div class="feat-card"><div class="feat-icon">🧹</div><h4>Automated Cleaning</h4><p>Median/mode imputation, duplicate removal, IQR outlier detection with a full audit trail.</p></div>
+    <div class="feat-card"><div class="feat-icon">📊</div><h4>Deep EDA</h4><p>Summary stats, correlation matrices, distribution analysis, top-N aggregations.</p></div>
+    <div class="feat-card"><div class="feat-icon">📉</div><h4>Rich Visualisations</h4><p>Histograms, bar, pie, scatter, heatmap, box plots — static PNG + interactive Plotly.</p></div>
+    <div class="feat-card"><div class="feat-icon">🤖</div><h4>Gemini AI Insights</h4><p>Executive summaries, findings, trends, anomalies and business recommendations.</p></div>
+    <div class="feat-card"><div class="feat-icon">💬</div><h4>Chat With Your Data</h4><p>FAISS + Gemini RAG pipeline for grounded natural-language Q&amp;A.</p></div>
+    <div class="feat-card"><div class="feat-icon">📑</div><h4>Real PDF Reports</h4><p>Professional ReportLab PDFs with charts, stats tables and AI insights. No browser print needed.</p></div>
+    <div class="feat-card"><div class="feat-icon">🗂</div><h4>Session History</h4><p>All your past analyses saved and accessible. Re-open any report at any time.</p></div>
+  </div>
+</section>
+
+<div id="toast-wrap"></div>
+
+<script>
+let SID = null;
+
+// Load user info
+fetch('/api/me').then(r=>r.json()).then(d=>{
+  if (d.authenticated) document.getElementById('nav-name').textContent = d.name;
+});
+
+// Drag & drop — fixed
+const label   = document.getElementById('drop-label');
+const fileInp = document.getElementById('file-inp');
+label.addEventListener('dragenter', e=>{e.preventDefault();e.stopPropagation();label.classList.add('over')});
+label.addEventListener('dragover',  e=>{e.preventDefault();e.stopPropagation();label.classList.add('over')});
+label.addEventListener('dragleave', e=>{e.preventDefault();e.stopPropagation();label.classList.remove('over')});
+label.addEventListener('drop', e=>{
+  e.preventDefault();e.stopPropagation();label.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+fileInp.addEventListener('change', e=>{if(e.target.files[0]) handleFile(e.target.files[0])});
+
+function handleFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['csv','xlsx','xls'].includes(ext)){toast('Only CSV and Excel files accepted.','error');return}
+  if (file.size > 52428800){toast('File exceeds 50 MB limit.','error');return}
+  uploadFile(file);
+}
+
+async function uploadFile(file) {
+  document.getElementById('file-info').textContent = '📁 ' + file.name;
+  const pw = document.getElementById('prog-wrap'); pw.style.display = 'block';
+  animProg(0,60);
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    const res  = await fetch('/upload',{method:'POST',body:fd});
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error||'Upload failed');
+    SID = data.session_id;
+    localStorage.setItem('ada_session_id', SID);
+    animProg(60,100);
+    setTimeout(()=>{
+      document.getElementById('analyse-section').style.display='block';
+      toast('✅ '+data.filename+' uploaded!','success');
+      litPipe(0);
+    },400);
+  } catch(e){toast(e.message,'error');animProg(0,0)}
+}
+
+async function startAnalysis() {
+  if (!SID){toast('Please upload a file first.','error');return}
+  const btn = document.getElementById('btn-analyse');
+  btn.disabled = true;
+  const sc = document.getElementById('status-card');
+  sc.style.display = 'block';
+  sc.scrollIntoView({behavior:'smooth',block:'nearest'});
+  let i = 0;
+  const iv = setInterval(()=>{
+    if(i>0) setStep(i-1,'done');
+    if(i<6){setStep(i,'running');litPipe(i+1);i++}
+  },900);
+  try {
+    const res  = await fetch('/analyze',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({session_id:SID})});
+    const data = await res.json();
+    clearInterval(iv);
+    if(!res.ok||data.error) throw new Error(data.error||'Analysis failed');
+    for(let j=0;j<6;j++) setStep(j,'done');
+    litPipe(7);
+    toast('🎉 Analysis complete! Redirecting…','success');
+    setTimeout(()=>{window.location.href='/dashboard'},1800);
+  } catch(e){
+    clearInterval(iv); btn.disabled=false;
+    toast(e.message,'error');
+  }
+}
+
+function setStep(idx, state) {
+  const el  = document.getElementById('step-'+idx); if(!el) return;
+  el.className = 'step-item '+state;
+  el.querySelector('.step-ico').innerHTML = state==='done'
+    ?'<i class="fas fa-check"></i>':'<i class="fas fa-sync"></i>';
+}
+function litPipe(upTo) {
+  for(let i=0;i<8;i++) document.getElementById('pb-'+i)?.classList.toggle('lit',i<=upTo);
+  for(let i=0;i<7;i++) document.getElementById('pa-'+i)?.classList.toggle('lit',i<upTo);
+}
+function animProg(from,to) {
+  let v=from;
+  const t=setInterval(()=>{v=Math.min(v+2,to);document.getElementById('prog-bar').style.width=v+'%';if(v>=to)clearInterval(t)},25);
+}
+async function logout() {
+  await fetch('/api/logout',{method:'POST'});
+  localStorage.removeItem('ada_session_id');
+  window.location.href = '/login';
+}
+function toast(msg,type='success') {
+  const c=document.getElementById('toast-wrap');
+  const d=document.createElement('div'); d.className='toast-msg';
+  d.style.borderLeft=`3px solid ${type==='error'?'#ef4444':'#22c55e'}`;
+  d.innerHTML=`<span>${type==='error'?'❌':'✅'}</span><span>${msg}</span>`;
+  c.appendChild(d);
+  setTimeout(()=>{d.style.opacity='0';setTimeout(()=>d.remove(),300)},4500);
+}
+let pp=0;
+const piv=setInterval(()=>{litPipe(pp);pp=(pp+1)%9},600);
+setTimeout(()=>{clearInterval(piv);litPipe(0)},5000);
+</script>
+</body>
+</html>

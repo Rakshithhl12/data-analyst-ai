@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Reports — DataAnalyst AI</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<style>
+:root{--p:#4f46e5;--s:#7c3aed;--a:#06b6d4;--ok:#22c55e;--err:#ef4444;--warn:#f59e0b;
+  --bg:#0f0f23;--card:#1a1a2e;--surf:#0f172a;--bdr:rgba(255,255,255,.08);--txt:#e2e8f0;--dim:#64748b;--sub:#94a3b8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+a{text-decoration:none;color:inherit}
+nav{background:rgba(15,15,35,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--bdr);
+  padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.brand{font-weight:800;font-size:1.15rem;color:#fff;display:flex;align-items:center;gap:.5rem}
+.brand span{color:var(--a)}
+.nav-links a{color:var(--sub);margin-left:1.2rem;font-size:.875rem;transition:color .2s}
+.nav-links a:hover{color:#fff}
+.btn-logout{background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;
+  padding:.3rem .8rem;border-radius:6px;font-size:.78rem;cursor:pointer;margin-left:.8rem;transition:all .2s}
+.btn-logout:hover{background:rgba(239,68,68,.1)}
+.wrap{max-width:1020px;margin:3rem auto;padding:0 1.5rem}
+.page-header{margin-bottom:2.5rem}
+.page-header h1{font-size:1.9rem;font-weight:800;margin-bottom:.3rem}
+.page-header p{color:var(--dim);font-size:.9rem}
+.session-box{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:1.15rem 1.5rem;
+  margin-bottom:2.2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.session-box .lbl{font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem}
+.session-box .val{font-size:.88rem;font-weight:600;font-family:monospace;color:var(--txt)}
+.pill{padding:.28rem .85rem;border-radius:99px;font-size:.76rem;font-weight:700}
+.pill-ok{background:rgba(34,197,94,.15);color:var(--ok)}
+.pill-pend{background:rgba(245,158,11,.12);color:var(--warn)}
+.pill-err{background:rgba(239,68,68,.12);color:var(--err)}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.9rem;margin-bottom:2.2rem}
+.mc{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:1rem}
+.mc .lbl{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem}
+.mc .val{font-size:1.15rem;font-weight:700}
+.mc .sub{font-size:.76rem;color:var(--sub);margin-top:.12rem}
+.report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1.1rem;margin-bottom:2.2rem}
+.rcard{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;
+  transition:border-color .2s,transform .2s;position:relative;overflow:hidden}
+.rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.rcard.html::before{background:linear-gradient(90deg,var(--a),var(--p))}
+.rcard.pdf::before{background:linear-gradient(90deg,var(--err),#f97316)}
+.rcard:hover{border-color:rgba(79,70,229,.35);transform:translateY(-3px)}
+.rcard-icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1rem}
+.rcard.html .rcard-icon{background:rgba(6,182,212,.12);color:var(--a)}
+.rcard.pdf  .rcard-icon{background:rgba(239,68,68,.12);color:var(--err)}
+.rcard h3{font-size:.98rem;font-weight:700;margin-bottom:.3rem}
+.rcard p{font-size:.845rem;color:var(--sub);line-height:1.6;margin-bottom:1.1rem}
+.rcard-btns{display:flex;gap:.55rem;flex-wrap:wrap}
+.btn-g{background:linear-gradient(135deg,var(--p),var(--s));border:none;color:#fff;
+  padding:.48rem 1rem;border-radius:8px;font-size:.83rem;font-weight:600;
+  cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem;transition:opacity .2s}
+.btn-g:hover{opacity:.85;color:#fff}
+.btn-o{background:transparent;border:1px solid var(--bdr);color:var(--sub);
+  padding:.48rem 1rem;border-radius:8px;font-size:.83rem;cursor:pointer;
+  text-decoration:none;display:inline-flex;align-items:center;gap:.35rem;transition:all .2s}
+.btn-o:hover{border-color:var(--a);color:var(--a)}
+.btn-red{background:linear-gradient(135deg,#dc2626,#ea580c);border:none;color:#fff;
+  padding:.48rem 1rem;border-radius:8px;font-size:.83rem;font-weight:600;
+  cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem;transition:opacity .2s}
+.btn-red:hover{opacity:.85;color:#fff}
+.preview-section h3{font-size:.9rem;font-weight:700;color:#a5b4fc;margin-bottom:.9rem;
+  display:flex;align-items:center;gap:.5rem}
+.preview-section h3::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.preview-placeholder{width:100%;height:180px;border:2px dashed rgba(79,70,229,.25);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.7rem;
+  color:var(--dim);cursor:pointer;transition:all .2s}
+.preview-placeholder:hover{border-color:var(--p);background:rgba(79,70,229,.04)}
+.preview-placeholder i{font-size:2.5rem;color:#1e293b}
+.preview-frame{width:100%;height:620px;border:1px solid var(--bdr);border-radius:12px;background:#fff;display:none}
+.empty{text-align:center;padding:5rem 2rem;color:var(--sub)}
+.empty i{font-size:3.5rem;color:#1e293b;display:block;margin-bottom:1rem}
+#toast-wrap{position:fixed;top:1.2rem;right:1.2rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
+.toast-msg{background:#1e293b;border:1px solid var(--bdr);border-radius:8px;padding:.65rem 1rem;
+  font-size:.84rem;color:var(--txt);max-width:300px;display:flex;align-items:center;gap:.5rem;animation:tIn .25s ease}
+@keyframes tIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand"><span>⚡</span>Data<span>Analyst</span> AI</div>
+  <div class="nav-links">
+    <a href="/"><i class="fas fa-upload me-1"></i>Upload</a>
+    <a href="/dashboard"><i class="fas fa-chart-pie me-1"></i>Dashboard</a>
+    <a href="/history"><i class="fas fa-history me-1"></i>History</a>
+    <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>Logout</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="page-header">
+    <h1>📑 Reports</h1>
+    <p>Download or preview analysis reports for the current session.</p>
+  </div>
+  <div id="content"></div>
+</div>
+<div id="toast-wrap"></div>
+
+<script>
+const SID = localStorage.getItem('ada_session_id');
+
+async function render(){
+  const el = document.getElementById('content');
+  if(!SID){
+    el.innerHTML=`<div class="empty"><i class="fas fa-file-alt"></i><h3>No session found</h3>
+    <p>Upload a dataset to generate reports.</p>
+    <a href="/" style="display:inline-flex;align-items:center;gap:.4rem;margin-top:1rem;
+      background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:.6rem 1.3rem;
+      border-radius:8px;font-weight:600;text-decoration:none">
+      <i class="fas fa-upload"></i>Upload Dataset</a></div>`;
+    return;
+  }
+  let data={};
+  try{const r=await fetch('/status/'+SID);data=await r.json()}catch(e){}
+  const isComplete=data.status==='complete';
+  const u=data.understanding||{};
+  const s=u.shape||{};
+  const ins=data.insights||{};
+  const quality=ins.data_quality_score||'—';
+  const qc=quality>=80?'#22c55e':quality>=60?'#f59e0b':'#ef4444';
+  const pillCls=isComplete?'pill-ok':data.status==='failed'?'pill-err':'pill-pend';
+  const pillTxt=isComplete?'✅ Complete':data.status==='failed'?'❌ Failed':'⏳ '+(data.status||'Pending');
+
+  el.innerHTML=`
+  <div class="session-box">
+    <div><div class="lbl">Session ID</div><div class="val">${SID}</div></div>
+    <div><div class="lbl">File</div><div class="val">${u.filename||'—'}</div></div>
+    <div><div class="lbl">Status</div><span class="pill ${pillCls}">${pillTxt}</span></div>
+    <a href="/dashboard" class="btn-g"><i class="fas fa-chart-pie"></i>Dashboard</a>
+  </div>
+
+  ${isComplete?`
+  <div class="meta-grid">
+    <div class="mc"><div class="lbl">Rows</div><div class="val">${(s.rows||0).toLocaleString()}</div></div>
+    <div class="mc"><div class="lbl">Columns</div><div class="val">${s.cols||'—'}</div></div>
+    <div class="mc"><div class="lbl">Quality Score</div><div class="val" style="color:${qc}">${quality}/100</div></div>
+    <div class="mc"><div class="lbl">Missing Values</div><div class="val">${(u.total_missing||0).toLocaleString()}</div>
+      <div class="sub">${(u.total_missing_pct||0).toFixed(1)}% of data</div></div>
+  </div>`:''}
+
+  <div class="report-grid">
+    <div class="rcard html">
+      <div class="rcard-icon"><i class="fas fa-globe"></i></div>
+      <h3>HTML Report</h3>
+      <p>Interactive dark-themed report with embedded charts, EDA tables, AI insights and a print-to-PDF button. Fully self-contained.</p>
+      <div class="rcard-btns">
+        ${isComplete?`
+        <a href="/report/${SID}" target="_blank" class="btn-g"><i class="fas fa-external-link-alt"></i>Open</a>
+        <button class="btn-o" onclick="loadPreview()"><i class="fas fa-eye"></i>Preview</button>`
+        :`<span style="color:var(--dim);font-size:.85rem">Run analysis first</span>`}
+      </div>
+    </div>
+    <div class="rcard pdf">
+      <div class="rcard-icon"><i class="fas fa-file-pdf"></i></div>
+      <h3>PDF Report</h3>
+      <p>Professional ReportLab PDF with data tables, embedded charts and AI insights. Generated server-side — no browser printing needed.</p>
+      <div class="rcard-btns">
+        ${isComplete?`<a href="/report/pdf/${SID}" download class="btn-red"><i class="fas fa-download"></i>Download PDF</a>`
+        :`<span style="color:var(--dim);font-size:.85rem">Run analysis first</span>`}
+      </div>
+    </div>
+  </div>
+
+  ${isComplete?`
+  <div class="preview-section">
+    <h3><i class="fas fa-eye"></i>Inline Preview</h3>
+    <div class="preview-placeholder" id="preview-placeholder" onclick="loadPreview()">
+      <i class="fas fa-play-circle" style="font-size:3rem;color:#4f46e5"></i>
+      <p>Click to load report preview</p>
+    </div>
+    <iframe id="preview-frame" class="preview-frame" src=""></iframe>
+  </div>`:
+  `<div style="text-align:center;padding:3rem 2rem;color:var(--sub)">
+    <i class="fas fa-hourglass-half" style="font-size:2.5rem;color:#334155;display:block;margin-bottom:1rem"></i>
+    <h3 style="margin-bottom:.5rem">Analysis ${data.status||'pending'}</h3>
+    <p>${data.error||'Start an analysis from the upload page.'}</p>
+    <a href="/" style="display:inline-flex;align-items:center;gap:.4rem;margin-top:1.2rem;
+      background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:.6rem 1.3rem;
+      border-radius:8px;font-weight:600;text-decoration:none">
+      <i class="fas fa-upload"></i>Go to Upload</a>
+  </div>`}`;
+}
+
+function loadPreview(){
+  const frame=document.getElementById('preview-frame');
+  const ph=document.getElementById('preview-placeholder');
+  if(!frame) return;
+  frame.src='/report/'+SID;
+  frame.style.display='block';
+  if(ph) ph.style.display='none';
+}
+
+async function logout(){
+  await fetch('/api/logout',{method:'POST'});
+  localStorage.removeItem('ada_session_id');
+  window.location.href='/login';
+}
+
+render();
+</script>
+</body>
+</html>
