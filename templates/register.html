@@ -1,167 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Register — DataAnalyst AI</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5"/>
+<title>Create Account — DataAnalyst AI</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 <style>
-:root{--p:#4f46e5;--s:#7c3aed;--a:#06b6d4;--bg:#0f0f23;--card:#1a1a2e;--bdr:rgba(255,255,255,.08);--txt:#e2e8f0;--dim:#64748b}
+:root{
+  --p:#4f46e5;--s:#7c3aed;--a:#06b6d4;--ok:#22c55e;--err:#ef4444;
+  --bg:#0a0a1a;--card:#12122a;--bdr:rgba(255,255,255,.08);
+  --txt:#e2e8f0;--dim:#64748b;--sub:#94a3b8;--muted:#475569
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;
-  display:flex;align-items:center;justify-content:center;padding:2rem 1rem;
-  background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(124,58,237,.25),transparent),var(--bg)}
-.auth-box{background:var(--card);border:1px solid var(--bdr);border-radius:20px;padding:2.5rem;
-  width:100%;max-width:440px;box-shadow:0 25px 60px rgba(0,0,0,.5)}
-.logo{text-align:center;margin-bottom:2rem}
-.logo .icon{font-size:2.5rem;display:block;margin-bottom:.5rem}
-.logo h1{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#fff,var(--a));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.logo p{color:var(--dim);font-size:.875rem;margin-top:.25rem}
-.form-group{margin-bottom:1.1rem}
-.form-label{display:block;font-size:.82rem;font-weight:600;color:#a5b4fc;margin-bottom:.4rem;
-  text-transform:uppercase;letter-spacing:.05em}
-.form-control{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--bdr);border-radius:10px;
-  color:var(--txt);padding:.75rem 1rem .75rem 2.6rem;font-size:.9rem;outline:none;transition:border-color .2s}
-.form-control:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
-.form-control::placeholder{color:var(--dim)}
-.btn-auth{width:100%;background:linear-gradient(135deg,var(--p),var(--s));border:none;color:#fff;
-  padding:.85rem;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:.3rem}
-.btn-auth:hover{opacity:.9;transform:translateY(-1px)}
-.btn-auth:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.divider{text-align:center;margin:1.2rem 0;position:relative;color:var(--dim);font-size:.85rem}
-.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--bdr)}
-.divider::before{left:0}.divider::after{right:0}
-.link-text{text-align:center;font-size:.875rem;color:var(--dim)}
-.link-text a{color:var(--a);font-weight:600;text-decoration:none}
-.error-msg{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;
-  padding:.7rem 1rem;font-size:.85rem;color:#f87171;margin-bottom:1rem;display:none}
-.success-msg{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);border-radius:8px;
-  padding:.7rem 1rem;font-size:.85rem;color:#4ade80;margin-bottom:1rem;display:none}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background-image:
+    radial-gradient(ellipse 90% 70% at 50% -5%,rgba(124,58,237,.2),transparent),
+    radial-gradient(ellipse 40% 40% at 10% 90%,rgba(6,182,212,.08),transparent);
+  padding:1.5rem 1rem
+}
+.auth-wrap{width:100%;max-width:440px}
+.auth-card{
+  background:var(--card);border:1px solid var(--bdr);border-radius:20px;
+  padding:clamp(1.5rem,5vw,2.5rem);
+  box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03) inset
+}
+.logo{text-align:center;margin-bottom:1.6rem}
+.logo-icon{
+  width:60px;height:60px;border-radius:16px;margin:0 auto .75rem;
+  background:linear-gradient(135deg,var(--s),var(--a));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;box-shadow:0 8px 24px rgba(124,58,237,.4)
+}
+.logo h1{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:.2rem}
+.logo p{color:var(--dim);font-size:.85rem}
+
+/* Benefits */
+.benefits{
+  display:grid;grid-template-columns:1fr 1fr;gap:.5rem;
+  margin-bottom:1.4rem
+}
+.ben{
+  display:flex;align-items:center;gap:.5rem;
+  background:rgba(79,70,229,.08);border:1px solid rgba(79,70,229,.15);
+  border-radius:8px;padding:.45rem .65rem;
+  font-size:.76rem;color:#a5b4fc
+}
+.ben i{color:var(--a);flex-shrink:0;font-size:.72rem}
+@media(max-width:360px){.benefits{grid-template-columns:1fr}}
+
+/* Alert */
+.alert-box{
+  border-radius:10px;padding:.7rem 1rem;font-size:.84rem;
+  display:none;margin-bottom:1rem;align-items:center;gap:.6rem
+}
+.alert-box.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+.alert-box.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#86efac}
+
+/* Form */
+.field{margin-bottom:1rem}
+.field label{
+  display:block;font-size:.75rem;font-weight:700;color:#a5b4fc;
+  margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em
+}
 .input-wrap{position:relative}
-.input-wrap i{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--dim);
-  font-size:.85rem;pointer-events:none}
-.pwd-strength{height:3px;border-radius:99px;margin-top:.4rem;background:rgba(255,255,255,.08);overflow:hidden}
-.pwd-fill{height:100%;border-radius:99px;transition:width .3s,background .3s}
-.pwd-hint{font-size:.75rem;color:var(--dim);margin-top:.2rem}
-.benefits{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.5rem}
-.benefit{display:flex;align-items:center;gap:.6rem;font-size:.83rem;color:var(--dim)}
-.benefit i{color:var(--a);font-size:.8rem;width:14px;text-align:center}
+.input-wrap .ico{
+  position:absolute;left:.9rem;top:50%;transform:translateY(-50%);
+  color:var(--dim);font-size:.82rem;pointer-events:none;transition:color .2s
+}
+.input-wrap input{
+  width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bdr);
+  border-radius:10px;color:var(--txt);
+  padding:.75rem 1rem .75rem 2.5rem;font-size:.9rem;
+  outline:none;transition:all .2s;-webkit-appearance:none
+}
+.input-wrap input:focus{border-color:var(--p);background:rgba(79,70,229,.08);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+.input-wrap:focus-within .ico{color:#a5b4fc}
+.input-wrap input::placeholder{color:var(--muted)}
+.eye-btn{
+  position:absolute;right:.85rem;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--dim);cursor:pointer;
+  padding:.2rem;font-size:.82rem;transition:color .2s
+}
+.eye-btn:hover{color:var(--sub)}
+
+/* Strength bar */
+.strength-bar{height:3px;background:rgba(255,255,255,.07);border-radius:99px;margin-top:.45rem;overflow:hidden}
+.strength-fill{height:100%;border-radius:99px;transition:width .3s,background .3s;width:0%}
+.strength-hint{font-size:.73rem;margin-top:.2rem;min-height:1em}
+
+/* Submit */
+.btn-submit{
+  width:100%;background:linear-gradient(135deg,var(--p),var(--s));
+  border:none;color:#fff;padding:.875rem;border-radius:11px;
+  font-size:.95rem;font-weight:700;cursor:pointer;
+  transition:all .2s;margin-top:.3rem;
+  display:flex;align-items:center;justify-content:center;gap:.5rem
+}
+.btn-submit:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 8px 24px rgba(79,70,229,.35)}
+.btn-submit:active{transform:translateY(0)}
+.btn-submit:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+
+.or-divider{
+  text-align:center;margin:1.2rem 0;position:relative;
+  color:var(--muted);font-size:.8rem
+}
+.or-divider::before,.or-divider::after{
+  content:'';position:absolute;top:50%;
+  width:44%;height:1px;background:var(--bdr)
+}
+.or-divider::before{left:0}.or-divider::after{right:0}
+
+.btn-google{
+  width:100%;background:rgba(255,255,255,.06);border:1px solid var(--bdr);
+  border-radius:11px;padding:.8rem;color:var(--txt);
+  font-size:.9rem;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:.65rem;
+  transition:all .2s;text-decoration:none
+}
+.btn-google:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:#fff}
+.btn-google img{width:18px;height:18px}
+
+.auth-footer{text-align:center;margin-top:1.3rem;font-size:.855rem;color:var(--dim)}
+.auth-footer a{color:var(--a);font-weight:600;text-decoration:none}
+.auth-footer a:hover{text-decoration:underline}
+
+.terms{font-size:.75rem;color:var(--muted);text-align:center;margin-top:.9rem;line-height:1.5}
+.terms a{color:var(--dim);text-decoration:underline}
+@media(max-width:400px){.auth-card{border-radius:14px;padding:1.4rem}.logo-icon{width:50px;height:50px;font-size:1.3rem}.logo h1{font-size:1.2rem}.btn-submit{padding:.75rem}}
+.auth-wrap{overflow-x:hidden}
 </style>
 </head>
 <body>
-<div class="auth-box">
-  <div class="logo">
-    <span class="icon">⚡</span>
-    <h1>DataAnalyst AI</h1>
-    <p>Create your free account</p>
-  </div>
+<div class="auth-wrap">
+  <div class="auth-card">
 
-  <div class="benefits">
-    <div class="benefit"><i class="fas fa-check-circle"></i>Unlimited dataset uploads</div>
-    <div class="benefit"><i class="fas fa-check-circle"></i>AI-powered insights with Gemini</div>
-    <div class="benefit"><i class="fas fa-check-circle"></i>PDF & HTML report generation</div>
-    <div class="benefit"><i class="fas fa-check-circle"></i>Chat with your data via RAG</div>
-  </div>
-
-  <div class="error-msg" id="error-msg"></div>
-  <div class="success-msg" id="success-msg"></div>
-
-  <div class="form-group">
-    <label class="form-label">Full Name</label>
-    <div class="input-wrap">
-      <i class="fas fa-user"></i>
-      <input type="text" class="form-control" id="name" placeholder="John Doe"/>
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <h1>DataAnalyst AI</h1>
+      <p>Create your free account</p>
     </div>
-  </div>
-  <div class="form-group">
-    <label class="form-label">Email Address</label>
-    <div class="input-wrap">
-      <i class="fas fa-envelope"></i>
-      <input type="email" class="form-control" id="email" placeholder="you@example.com"/>
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="form-label">Password</label>
-    <div class="input-wrap">
-      <i class="fas fa-lock"></i>
-      <input type="password" class="form-control" id="password"
-             placeholder="Min 6 characters" oninput="checkStrength(this.value)"
-             onkeydown="if(event.key==='Enter')register()"/>
-    </div>
-    <div class="pwd-strength"><div class="pwd-fill" id="pwd-fill" style="width:0%"></div></div>
-    <p class="pwd-hint" id="pwd-hint"></p>
-  </div>
 
-  <button class="btn-auth" id="btn-reg" onclick="register()">
-    <i class="fas fa-user-plus me-2"></i>Create Account
-  </button>
-  <div class="divider">or</div>
-  <div class="link-text">Already have an account? <a href="/login">Sign in</a></div>
+    <div class="benefits">
+      <div class="ben"><i class="fas fa-check-circle"></i>Unlimited uploads</div>
+      <div class="ben"><i class="fas fa-check-circle"></i>AI insights</div>
+      <div class="ben"><i class="fas fa-check-circle"></i>PDF reports</div>
+      <div class="ben"><i class="fas fa-check-circle"></i>Chat with data</div>
+    </div>
+
+    <div class="alert-box error" id="err-box"><i class="fas fa-exclamation-circle"></i><span id="err-msg"></span></div>
+    <div class="alert-box success" id="ok-box"><i class="fas fa-check-circle"></i><span id="ok-msg"></span></div>
+
+    <div class="field">
+      <label>Full Name</label>
+      <div class="input-wrap">
+        <i class="fas fa-user ico"></i>
+        <input type="text" id="name" placeholder="John Doe" autocomplete="name"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <div class="input-wrap">
+        <i class="fas fa-envelope ico"></i>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="input-wrap">
+        <i class="fas fa-lock ico"></i>
+        <input type="password" id="password" placeholder="Min 6 characters"
+               autocomplete="new-password"
+               oninput="checkStrength(this.value)"
+               onkeydown="if(event.key==='Enter')register()"/>
+        <button type="button" class="eye-btn" onclick="togglePwd('password',this)" tabindex="-1">
+          <i class="fas fa-eye"></i>
+        </button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="str-fill"></div></div>
+      <p class="strength-hint" id="str-hint"></p>
+    </div>
+
+    <button class="btn-submit" id="btn-reg" onclick="register()">
+      <i class="fas fa-user-plus"></i>Create Account
+    </button>
+
+    <p class="terms">By signing up you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
+
+    <div class="auth-footer">Already have an account? <a href="/login">Sign in</a></div>
+  </div>
 </div>
 
 <script>
-function checkStrength(pwd) {
-  const fill = document.getElementById('pwd-fill');
-  const hint = document.getElementById('pwd-hint');
-  let score = 0;
-  if (pwd.length >= 6)  score++;
-  if (pwd.length >= 10) score++;
-  if (/[A-Z]/.test(pwd)) score++;
-  if (/[0-9]/.test(pwd)) score++;
-  if (/[^A-Za-z0-9]/.test(pwd)) score++;
-  const levels = [
-    {w:'0%',   c:'#ef4444', t:''},
-    {w:'25%',  c:'#ef4444', t:'Weak'},
-    {w:'50%',  c:'#f59e0b', t:'Fair'},
-    {w:'75%',  c:'#06b6d4', t:'Good'},
-    {w:'100%', c:'#22c55e', t:'Strong'},
-  ];
-  const l = levels[Math.min(score, 4)];
-  fill.style.width = l.w; fill.style.background = l.c;
-  hint.textContent = l.t; hint.style.color = l.c;
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  const ico = btn.querySelector('i');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  ico.className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
 }
-
+function checkStrength(pwd) {
+  let s = 0;
+  if (pwd.length >= 6)  s++;
+  if (pwd.length >= 10) s++;
+  if (/[A-Z]/.test(pwd)) s++;
+  if (/[0-9]/.test(pwd)) s++;
+  if (/[^A-Za-z0-9]/.test(pwd)) s++;
+  const lvl = [
+    {w:'0%',  c:'',         t:''},
+    {w:'25%', c:'#ef4444',  t:'Weak'},
+    {w:'50%', c:'#f59e0b',  t:'Fair'},
+    {w:'75%', c:'#06b6d4',  t:'Good'},
+    {w:'100%',c:'#22c55e',  t:'Strong ✓'},
+  ];
+  const l = lvl[Math.min(s, 4)];
+  const f = document.getElementById('str-fill');
+  const h = document.getElementById('str-hint');
+  f.style.width = l.w; f.style.background = l.c;
+  h.textContent = l.t; h.style.color = l.c;
+}
+function showErr(msg) {
+  document.getElementById('err-msg').textContent = msg;
+  document.getElementById('err-box').style.display = 'flex';
+  document.getElementById('ok-box').style.display = 'none';
+}
+function showOk(msg) {
+  document.getElementById('ok-msg').textContent = msg;
+  document.getElementById('ok-box').style.display = 'flex';
+  document.getElementById('err-box').style.display = 'none';
+}
 async function register() {
   const name  = document.getElementById('name').value.trim();
   const email = document.getElementById('email').value.trim();
   const pwd   = document.getElementById('password').value;
   const btn   = document.getElementById('btn-reg');
-  hideMessages();
+  document.getElementById('err-box').style.display = 'none';
+  document.getElementById('ok-box').style.display = 'none';
   if (!name || !email || !pwd) { showErr('Please fill in all fields.'); return; }
   if (pwd.length < 6) { showErr('Password must be at least 6 characters.'); return; }
   btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating account…';
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account…';
   try {
-    const res  = await fetch('/api/register', {method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({name, email, password: pwd})});
+    const res  = await fetch('/api/register', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, email, password: pwd})
+    });
     const data = await res.json();
     if (!res.ok) {
-      showErr(data.error || 'Registration failed');
+      showErr(data.error || 'Registration failed.');
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Create Account';
+      btn.innerHTML = '<i class="fas fa-user-plus"></i>Create Account';
       return;
     }
-    showSuccess('Account created! Redirecting…');
-    setTimeout(() => { window.location.href = '/'; }, 1200);
+    showOk('Account created! Redirecting…');
+    setTimeout(() => { window.location.href = '/'; }, 1000);
   } catch(e) {
     showErr('Network error. Please try again.');
     btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Create Account';
+    btn.innerHTML = '<i class="fas fa-user-plus"></i>Create Account';
   }
-}
-function showErr(msg) {
-  const e = document.getElementById('error-msg');
-  e.textContent = '❌ ' + msg; e.style.display = 'block';
-}
-function showSuccess(msg) {
-  const e = document.getElementById('success-msg');
-  e.textContent = '✅ ' + msg; e.style.display = 'block';
-}
-function hideMessages() {
-  document.getElementById('error-msg').style.display = 'none';
-  document.getElementById('success-msg').style.display = 'none';
 }
 </script>
 </body>

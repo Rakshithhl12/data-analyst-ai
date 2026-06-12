@@ -2,8 +2,8 @@
 Autonomous Data Analyst — Flask App with Authentication
 ========================================================
 """
-import json, logging, os, uuid
-from datetime import datetime
+import json, logging, os, uuid, secrets
+from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
 
@@ -65,13 +65,18 @@ def login_required(f):
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    app.config["SECRET_KEY"]          = os.getenv("SECRET_KEY", "ada-super-secret-2024")
-    app.config["MAX_CONTENT_LENGTH"]  = 50 * 1024 * 1024
-    app.config["UPLOAD_FOLDER"]       = Path("uploads")
-    app.config["REPORTS_FOLDER"]      = Path("reports")
-    app.config["CHARTS_FOLDER"]       = Path("charts")
-    app.config["VECTOR_STORE_FOLDER"] = Path("vector_store")
-    app.config["ALLOWED_EXTENSIONS"]  = {"csv", "xlsx", "xls"}
+    app.config["SECRET_KEY"]              = os.getenv("SECRET_KEY", "ada-super-secret-2024")
+    app.config["MAX_CONTENT_LENGTH"]      = 50 * 1024 * 1024
+    app.config["UPLOAD_FOLDER"]           = Path("uploads")
+    app.config["REPORTS_FOLDER"]          = Path("reports")
+    app.config["CHARTS_FOLDER"]           = Path("charts")
+    app.config["VECTOR_STORE_FOLDER"]     = Path("vector_store")
+    app.config["ALLOWED_EXTENSIONS"]      = {"csv", "xlsx", "xls"}
+    # Session settings — required for cookies to persist on production hosts
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_SECURE"]   = os.getenv("FLASK_ENV") == "production"
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
     for k in ("UPLOAD_FOLDER","REPORTS_FOLDER","CHARTS_FOLDER","VECTOR_STORE_FOLDER"):
         app.config[k].mkdir(parents=True, exist_ok=True)
 
@@ -108,6 +113,7 @@ def create_app() -> Flask:
         ok, msg = _create_user(name, email, pwd)
         if not ok:
             return jsonify({"error": msg}), 409
+        session.permanent     = True
         session["user_email"] = email.lower()
         session["user_name"]  = name
         return jsonify({"message":"Registered successfully"}), 200
@@ -120,6 +126,7 @@ def create_app() -> Flask:
         user  = _get_user(email)
         if not user or not check_password_hash(user["password"], pwd):
             return jsonify({"error":"Invalid email or password"}), 401
+        session.permanent     = True
         session["user_email"] = email
         session["user_name"]  = user["name"]
         return jsonify({"message":"Login successful", "name": user["name"]}), 200
@@ -335,6 +342,133 @@ def create_app() -> Flask:
                 _save_users(users)
         except Exception: pass
         return jsonify({"message":"Deleted"}), 200
+
+    # ── Forgot / Reset password ──────────────────────────────────────────────
+    @app.route("/forgot-password")
+    def forgot_page():
+        return render_template("forgot_password.html")
+
+    @app.route("/reset-password")
+    def reset_page():
+        return render_template("reset_password.html")
+
+    @app.route("/api/forgot-password", methods=["POST"])
+    def api_forgot_password():
+        d     = request.get_json(silent=True) or {}
+        email = d.get("email", "").strip().lower()
+        user  = _get_user(email)
+        # Always return 200 to prevent email enumeration
+        if user:
+            token = secrets.token_urlsafe(32)
+            expiry = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            users = _load_users()
+            users[email]["reset_token"]  = token
+            users[email]["reset_expiry"] = expiry
+            _save_users(users)
+            reset_url = f"{request.host_url}reset-password?token={token}"
+            # Log for development (replace with real email in production)
+            logger.info("PASSWORD RESET LINK for %s: %s", email, reset_url)
+            # TODO: send actual email via SendGrid/Mailgun/SES
+        return jsonify({"message": "If that email exists, a reset link has been sent."}), 200
+
+    @app.route("/api/reset-password", methods=["POST"])
+    def api_reset_password():
+        d     = request.get_json(silent=True) or {}
+        token = d.get("token", "").strip()
+        pwd   = d.get("password", "")
+        if not token or not pwd or len(pwd) < 6:
+            return jsonify({"error": "Invalid request"}), 400
+        users = _load_users()
+        matched_email = None
+        for email, user in users.items():
+            if user.get("reset_token") == token:
+                expiry = user.get("reset_expiry", "")
+                if expiry and datetime.fromisoformat(expiry) > datetime.utcnow():
+                    matched_email = email
+                break
+        if not matched_email:
+            return jsonify({"error": "Reset link is invalid or has expired."}), 400
+        users[matched_email]["password"]    = generate_password_hash(pwd)
+        users[matched_email]["reset_token"]  = None
+        users[matched_email]["reset_expiry"] = None
+        _save_users(users)
+        return jsonify({"message": "Password updated successfully"}), 200
+
+    # ── Google OAuth ──────────────────────────────────────────────────────────
+    @app.route("/auth/google")
+    def google_oauth():
+        google_client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+        if not google_client_id:
+            # OAuth not configured — redirect to login with message
+            return redirect(url_for("login_page") + "?msg=google_not_configured")
+        callback_url = url_for("google_callback", _external=True)
+        import urllib.parse
+        params = urllib.parse.urlencode({
+            "client_id":     google_client_id,
+            "redirect_uri":  callback_url,
+            "response_type": "code",
+            "scope":         "openid email profile",
+            "access_type":   "offline",
+            "state":         secrets.token_urlsafe(16),
+        })
+        return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?{params}")
+
+    @app.route("/auth/google/callback")
+    def google_callback():
+        import urllib.parse, urllib.request
+        code = request.args.get("code", "")
+        if not code:
+            return redirect(url_for("login_page"))
+        google_client_id     = os.getenv("GOOGLE_CLIENT_ID", "")
+        google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "")
+        callback_url         = url_for("google_callback", _external=True)
+        try:
+            # Exchange code for token
+            token_data = urllib.parse.urlencode({
+                "code":          code,
+                "client_id":     google_client_id,
+                "client_secret": google_client_secret,
+                "redirect_uri":  callback_url,
+                "grant_type":    "authorization_code",
+            }).encode()
+            req = urllib.request.Request(
+                "https://oauth2.googleapis.com/token",
+                data=token_data,
+                method="POST"
+            )
+            with urllib.request.urlopen(req) as r:
+                token_resp = json.loads(r.read())
+            access_token = token_resp.get("access_token", "")
+            # Get user info
+            uinfo_req = urllib.request.Request(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            with urllib.request.urlopen(uinfo_req) as r:
+                uinfo = json.loads(r.read())
+            email = uinfo.get("email", "").lower()
+            name  = uinfo.get("name", email.split("@")[0])
+            if not email:
+                return redirect(url_for("login_page"))
+            # Create user if not exists
+            users = _load_users()
+            if email not in users:
+                users[email] = {
+                    "id":         str(uuid.uuid4()),
+                    "name":       name,
+                    "email":      email,
+                    "password":   "",  # Google users have no local password
+                    "provider":   "google",
+                    "created_at": datetime.utcnow().isoformat(),
+                    "sessions":   []
+                }
+                _save_users(users)
+            session["user_email"] = email
+            session["user_name"]  = name
+            return redirect(url_for("index"))
+        except Exception as e:
+            logger.exception("Google OAuth failed: %s", e)
+            return redirect(url_for("login_page"))
 
     # ── Health ────────────────────────────────────────────────────────────────
     @app.route("/health")
