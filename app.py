@@ -3,6 +3,7 @@ Autonomous Data Analyst — Flask App with Authentication
 ========================================================
 """
 import json, logging, os, uuid, secrets
+import keep_alive
 from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
@@ -20,32 +21,77 @@ logging.basicConfig(level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# ── Simple file-based user store (no DB dependency for portability) ──────────
+# ── User store: MongoDB if configured, else local JSON fallback ──────────────
 USERS_FILE = Path("instance/users.json")
+_mongo_col  = None
+
+def _get_mongo():
+    global _mongo_col
+    if _mongo_col is not None:
+        return _mongo_col
+    uri = os.getenv("MONGODB_URI", "")
+    if not uri:
+        return None
+    try:
+        from pymongo import MongoClient
+        client     = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        client.admin.command("ping")
+        _mongo_col = client["dataanalyst"]["users"]
+        logging.getLogger(__name__).info("MongoDB connected")
+        return _mongo_col
+    except Exception as e:
+        logging.getLogger(__name__).warning("MongoDB failed: %s — using local JSON", e)
+        return None
 
 def _load_users():
+    col = _get_mongo()
+    if col is not None:
+        return {u["email"]: u for u in col.find({}, {"_id": 0})}
     if USERS_FILE.exists():
         return json.loads(USERS_FILE.read_text())
     return {}
 
 def _save_users(users):
+    col = _get_mongo()
+    if col is not None:
+        for email, user in users.items():
+            col.update_one({"email": email}, {"$set": user}, upsert=True)
+        return
     USERS_FILE.parent.mkdir(exist_ok=True)
     USERS_FILE.write_text(json.dumps(users, indent=2))
 
 def _get_user(email):
-    return _load_users().get(email.lower())
+    email = email.lower()
+    col = _get_mongo()
+    if col is not None:
+        return col.find_one({"email": email}, {"_id": 0})
+    return _load_users().get(email)
 
 def _create_user(name, email, password):
+    email = email.lower()
+    col = _get_mongo()
+    if col is not None:
+        if col.find_one({"email": email}):
+            return False, "Email already registered"
+        col.insert_one({
+            "id":         str(uuid.uuid4()),
+            "name":       name,
+            "email":      email,
+            "password":   generate_password_hash(password),
+            "created_at": datetime.utcnow().isoformat(),
+            "sessions":   []
+        })
+        return True, "OK"
     users = _load_users()
-    if email.lower() in users:
+    if email in users:
         return False, "Email already registered"
-    users[email.lower()] = {
-        "id": str(uuid.uuid4()),
-        "name": name,
-        "email": email.lower(),
-        "password": generate_password_hash(password),
+    users[email] = {
+        "id":         str(uuid.uuid4()),
+        "name":       name,
+        "email":      email,
+        "password":   generate_password_hash(password),
         "created_at": datetime.utcnow().isoformat(),
-        "sessions": []
+        "sessions":   []
     }
     _save_users(users)
     return True, "OK"
@@ -62,6 +108,100 @@ def login_required(f):
     return decorated
 
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+def _send_reset_email(email: str, name: str, reset_url: str):
+    """Send password reset email via SendGrid (if configured) or SMTP fallback."""
+    subject = "Reset your DataAnalyst AI password"
+    body_html = f"""
+    <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#0f0f23;color:#e2e8f0;border-radius:16px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 36px;text-align:center">
+        <div style="font-size:2rem">⚡</div>
+        <h1 style="margin:8px 0 0;font-size:1.3rem;color:#fff">DataAnalyst AI</h1>
+      </div>
+      <div style="padding:32px 36px">
+        <h2 style="font-size:1.1rem;margin:0 0 12px;color:#fff">Hi {name},</h2>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 24px">
+          We received a request to reset your password. Click the button below to set a new one.
+          This link expires in <strong style="color:#e2e8f0">1 hour</strong>.
+        </p>
+        <div style="text-align:center;margin:28px 0">
+          <a href="{reset_url}"
+             style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
+                    text-decoration:none;padding:14px 32px;border-radius:10px;
+                    font-weight:700;font-size:.95rem;display:inline-block">
+            Reset Password
+          </a>
+        </div>
+        <p style="color:#64748b;font-size:.8rem;line-height:1.6;margin:0">
+          If you didn't request this, you can safely ignore this email.<br/>
+          Or copy this link: <a href="{reset_url}" style="color:#a5b4fc;word-break:break-all">{reset_url}</a>
+        </p>
+      </div>
+      <div style="background:#0a0a1a;padding:16px 36px;text-align:center">
+        <p style="color:#475569;font-size:.75rem;margin:0">DataAnalyst AI · Automated Data Analysis</p>
+      </div>
+    </div>
+    """
+    body_text = f"Hi {name},\n\nReset your password here: {reset_url}\n\nThis link expires in 1 hour."
+
+    sendgrid_key = os.getenv("SENDGRID_API_KEY", "")
+    from_email   = os.getenv("FROM_EMAIL", "noreply@dataanalyst.ai")
+
+    if sendgrid_key:
+        try:
+            import urllib.request as _ur, urllib.parse as _up
+            payload = json.dumps({
+                "personalizations": [{"to": [{"email": email, "name": name}]}],
+                "from": {"email": from_email, "name": "DataAnalyst AI"},
+                "subject": subject,
+                "content": [
+                    {"type": "text/plain", "value": body_text},
+                    {"type": "text/html",  "value": body_html},
+                ]
+            }).encode()
+            req = _ur.Request(
+                "https://api.sendgrid.com/v3/mail/send",
+                data=payload,
+                headers={
+                    "Authorization": f"Bearer {sendgrid_key}",
+                    "Content-Type": "application/json",
+                },
+                method="POST"
+            )
+            with _ur.urlopen(req) as r:
+                logger.info("SendGrid email sent to %s — status %s", email, r.status)
+            return
+        except Exception as e:
+            logger.error("SendGrid failed: %s", e)
+
+    # SMTP fallback (Gmail, etc.)
+    smtp_host = os.getenv("SMTP_HOST", "")
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_pass = os.getenv("SMTP_PASS", "")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+
+    if smtp_host and smtp_user and smtp_pass:
+        try:
+            import smtplib
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"]    = f"DataAnalyst AI <{smtp_user}>"
+            msg["To"]      = email
+            msg.attach(MIMEText(body_text, "plain"))
+            msg.attach(MIMEText(body_html, "html"))
+            with smtplib.SMTP(smtp_host, smtp_port) as s:
+                s.ehlo(); s.starttls(); s.login(smtp_user, smtp_pass)
+                s.sendmail(smtp_user, email, msg.as_string())
+            logger.info("SMTP email sent to %s", email)
+            return
+        except Exception as e:
+            logger.error("SMTP failed: %s", e)
+
+    logger.warning("No email provider configured. Reset link for %s: %s", email, reset_url)
+
 
 def create_app() -> Flask:
     app = Flask(__name__)
@@ -99,6 +239,16 @@ def create_app() -> Flask:
         if "user_email" in session:
             return redirect(url_for("index"))
         return render_template("register.html")
+
+    @app.route("/forgot-password")
+    def forgot_page():
+        if "user_email" in session:
+            return redirect(url_for("index"))
+        return render_template("forgot_password.html")
+
+    @app.route("/reset-password")
+    def reset_page():
+        return render_template("reset_password.html")
 
     @app.route("/api/register", methods=["POST"])
     def api_register():
@@ -188,15 +338,23 @@ def create_app() -> Flask:
 
     def _add_session_to_user(email, sid, filename):
         try:
+            col = _get_mongo()
+            new_session = {
+                "session_id": sid, "filename": filename,
+                "created_at": datetime.utcnow().isoformat(),
+                "status": "pending"
+            }
+            if col is not None:
+                col.update_one(
+                    {"email": email},
+                    {"$push": {"sessions": {"$each": [new_session], "$position": 0, "$slice": 20}}}
+                )
+                return
             users = _load_users()
             if email in users:
                 if "sessions" not in users[email]:
                     users[email]["sessions"] = []
-                users[email]["sessions"].insert(0, {
-                    "session_id": sid, "filename": filename,
-                    "created_at": datetime.utcnow().isoformat(),
-                    "status": "pending"
-                })
+                users[email]["sessions"].insert(0, new_session)
                 users[email]["sessions"] = users[email]["sessions"][:20]
                 _save_users(users)
         except Exception as e:
@@ -204,6 +362,13 @@ def create_app() -> Flask:
 
     def _update_session_status(email, sid, status):
         try:
+            col = _get_mongo()
+            if col is not None:
+                col.update_one(
+                    {"email": email, "sessions.session_id": sid},
+                    {"$set": {"sessions.$.status": status}}
+                )
+                return
             users = _load_users()
             if email in users:
                 for s in users[email].get("sessions", []):
@@ -343,32 +508,41 @@ def create_app() -> Flask:
         except Exception: pass
         return jsonify({"message":"Deleted"}), 200
 
-    # ── Forgot / Reset password ──────────────────────────────────────────────
-    @app.route("/forgot-password")
-    def forgot_page():
-        return render_template("forgot_password.html")
-
-    @app.route("/reset-password")
-    def reset_page():
-        return render_template("reset_password.html")
-
     @app.route("/api/forgot-password", methods=["POST"])
     def api_forgot_password():
         d     = request.get_json(silent=True) or {}
         email = d.get("email", "").strip().lower()
-        user  = _get_user(email)
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+        try:
+            user  = _get_user(email)
+            if user:
+                token  = secrets.token_urlsafe(32)
+                expiry = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+                users  = _load_users()
+                users[email]["reset_token"]  = token
+                users[email]["reset_expiry"] = expiry
+                _save_users(users)
+                # Build reset URL — handle both http and https
+                host = request.host_url.rstrip("/")
+                reset_url = f"{host}/reset-password?token={token}"
+                logger.info("Reset link generated for %s", email)
+                # Save to file for easy access during local development
+                try:
+                    with open("reset_links.txt", "a") as rl:
+                        rl.write(f"Email: {email}\nURL: {reset_url}\n---\n")
+                except Exception:
+                    pass
+                try:
+                    _send_reset_email(email, user.get("name", "User"), reset_url)
+                    logger.info("Reset email sent to %s", email)
+                except Exception as mail_err:
+                    logger.error("Email send failed for %s: %s", email, mail_err)
+            else:
+                logger.info("Forgot password: email not found: %s", email)
+        except Exception as e:
+            logger.error("Forgot password error: %s", e)
         # Always return 200 to prevent email enumeration
-        if user:
-            token = secrets.token_urlsafe(32)
-            expiry = (datetime.utcnow() + timedelta(hours=1)).isoformat()
-            users = _load_users()
-            users[email]["reset_token"]  = token
-            users[email]["reset_expiry"] = expiry
-            _save_users(users)
-            reset_url = f"{request.host_url}reset-password?token={token}"
-            # Log for development (replace with real email in production)
-            logger.info("PASSWORD RESET LINK for %s: %s", email, reset_url)
-            # TODO: send actual email via SendGrid/Mailgun/SES
         return jsonify({"message": "If that email exists, a reset link has been sent."}), 200
 
     @app.route("/api/reset-password", methods=["POST"])
@@ -394,82 +568,6 @@ def create_app() -> Flask:
         _save_users(users)
         return jsonify({"message": "Password updated successfully"}), 200
 
-    # ── Google OAuth ──────────────────────────────────────────────────────────
-    @app.route("/auth/google")
-    def google_oauth():
-        google_client_id = os.getenv("GOOGLE_CLIENT_ID", "")
-        if not google_client_id:
-            # OAuth not configured — redirect to login with message
-            return redirect(url_for("login_page") + "?msg=google_not_configured")
-        callback_url = url_for("google_callback", _external=True)
-        import urllib.parse
-        params = urllib.parse.urlencode({
-            "client_id":     google_client_id,
-            "redirect_uri":  callback_url,
-            "response_type": "code",
-            "scope":         "openid email profile",
-            "access_type":   "offline",
-            "state":         secrets.token_urlsafe(16),
-        })
-        return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?{params}")
-
-    @app.route("/auth/google/callback")
-    def google_callback():
-        import urllib.parse, urllib.request
-        code = request.args.get("code", "")
-        if not code:
-            return redirect(url_for("login_page"))
-        google_client_id     = os.getenv("GOOGLE_CLIENT_ID", "")
-        google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "")
-        callback_url         = url_for("google_callback", _external=True)
-        try:
-            # Exchange code for token
-            token_data = urllib.parse.urlencode({
-                "code":          code,
-                "client_id":     google_client_id,
-                "client_secret": google_client_secret,
-                "redirect_uri":  callback_url,
-                "grant_type":    "authorization_code",
-            }).encode()
-            req = urllib.request.Request(
-                "https://oauth2.googleapis.com/token",
-                data=token_data,
-                method="POST"
-            )
-            with urllib.request.urlopen(req) as r:
-                token_resp = json.loads(r.read())
-            access_token = token_resp.get("access_token", "")
-            # Get user info
-            uinfo_req = urllib.request.Request(
-                "https://www.googleapis.com/oauth2/v2/userinfo",
-                headers={"Authorization": f"Bearer {access_token}"}
-            )
-            with urllib.request.urlopen(uinfo_req) as r:
-                uinfo = json.loads(r.read())
-            email = uinfo.get("email", "").lower()
-            name  = uinfo.get("name", email.split("@")[0])
-            if not email:
-                return redirect(url_for("login_page"))
-            # Create user if not exists
-            users = _load_users()
-            if email not in users:
-                users[email] = {
-                    "id":         str(uuid.uuid4()),
-                    "name":       name,
-                    "email":      email,
-                    "password":   "",  # Google users have no local password
-                    "provider":   "google",
-                    "created_at": datetime.utcnow().isoformat(),
-                    "sessions":   []
-                }
-                _save_users(users)
-            session["user_email"] = email
-            session["user_name"]  = name
-            return redirect(url_for("index"))
-        except Exception as e:
-            logger.exception("Google OAuth failed: %s", e)
-            return redirect(url_for("login_page"))
-
     # ── Health ────────────────────────────────────────────────────────────────
     @app.route("/health")
     def health():
@@ -480,6 +578,8 @@ def create_app() -> Flask:
     @app.errorhandler(404)
     def not_found(_): return jsonify({"error":"Not found"}), 404
 
+    # Start keep-alive pinger (prevents Render free tier sleep)
+    keep_alive.start()
     return app
 
 app = create_app()
